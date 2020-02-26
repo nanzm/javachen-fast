@@ -1,0 +1,69 @@
+server:
+  port: ${SERVER_PORT:8080}
+  tomcat:
+    uri-encoding: UTF-8
+    accept-count: 100
+    max-connections: 10000
+    max-threads: 2000
+    min-spare-threads: 10
+  error.include-stacktrace: ON_TRACE_PARAM
+
+spring:
+  application.name: javachen-fast
+  profiles.active: ${SPRING_PROFILES_ACTIVE:dev}
+  main.banner-mode: 'off'
+  main.allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+  messages:
+    cache-duration: 0
+    encoding: UTF-8
+    fallback-to-system-locale: false
+    use-code-as-default-message: true
+    basename: messages,classpath*:/ValidationMessages,classpath*:/org/hibernate/validator/ValidationMessages
+  jackson:
+    time-zone: Asia/Shanghai
+    date-format: yyyy-MM-dd hh:mm:ss
+    default-property-inclusion: NON_NULL
+    serialization.write-dates-as-timestamps: false
+  jmx:
+    enabled: false
+  redis:
+    open: false  # 是否开启redis缓存  true开启   false关闭
+    database: 0
+    host: ${REDIS_URL:192.168.1.75}
+    port: 6379
+    password:    # 密码（默认为空）
+    timeout: 6000ms  # 连接超时时长（毫秒）
+    jedis:
+      pool:
+        max-active: 1000  # 连接池最大连接数（使用负值表示没有限制）
+        max-wait: -1ms      # 连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-idle: 10      # 连接池中的最大空闲连接
+        min-idle: 5       # 连接池中的最小空闲连接
+  jpa:
+    show-sql: true
+    hibernate:
+      use-new-id-generator-mappings: false
+      ddl-auto: create
+#    datasource:
+#      type: com.alibaba.druid.pool.DruidDataSource
+#      druid:
+#        url: jdbc:mysql://192.168.56.100:3306/test?useUnicode=true&characterEncoding=UTF-8&useSSL=false
+#        username: root
+#        password: 123456
+#        max-active: 100 #最大连接数
+#        min-idle: 20 #最小连接数
+#        max-wait: 5000 #获取连接的最大等待时间
+#        validation-query: select 'x'  #解决mysql 8小时问题
+#        time-between-eviction-runs-millis: 60000 #空闲连接检查时间间隔
+#        min-evictable-idle-time-millis: 300000 #空闲连接最小空闲时间
+  h2.console.enabled: true
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-docs

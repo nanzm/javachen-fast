@@ -1,0 +1,4 @@
+logging:
+  file:
+    max-history: 30
+    path: ${user.dir}/logs

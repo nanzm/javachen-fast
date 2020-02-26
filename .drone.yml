@@ -1,0 +1,68 @@
+kind: pipeline
+type: docker
+name: default
+
+steps:
+  - name: package
+    image: maven:3.6.3-ibmjava-8-alpine
+    volumes:
+      - name: cache
+        path: /root/.m2
+    commands:
+      - mvn clean package -Dmaven.test.skip=true
+
+  - name: build
+    image: plugins/docker
+    settings:
+      username: admin
+      password:
+        from_secret: HARBOR_PASSWORD
+      repo: harbor.test.javachen.com.cn/soft/ads
+      registry: harbor.test.javachen.com.cn
+      force_tag: true
+      tags:
+        - latest
+        - ${DRONE_TAG##v}
+    depends_on:
+      - package
+
+  - name: deploy-k8s
+    image: quay.io/hectorqin/drone-kubectl
+    settings:
+      kubernetes_template: k8s/test/deployment.yaml
+      kubernetes_namespace: ads
+    environment:
+      KUBERNETES_SERVER:
+        from_secret: KUBERNETES_SERVER
+      KUBERNETES_CERT:
+        from_secret: KUBERNETES_CERT
+      KUBERNETES_TOKEN:
+        from_secret: KUBERNETES_TOKEN
+    depends_on:
+      - build
+
+  - name: notify
+    image: javachen/drone-dingtalk-message
+    settings:
+      token:
+        #164971f913b0bcf3d5d75c83169529f78353c7041b92f02850ae2fd986c22248
+        from_secret: DINGTALK_TOKEN
+      type: markdown
+      secret:
+        #SECaab0c19b7e03b963c32093cc1e90ae5e7fcfa7035e2c6de5598f71cd0f9ac185
+        from_secret: DINGTALK_SECRET
+      tips_title: '通知：构建结果'
+    depends_on:
+      - deploy-k8s
+    when:
+      status: [failure, success]
+
+volumes:
+  - name: cache
+    host:
+      path: /tmp/cache/.m2
+
+trigger:
+  event:
+    - tag
+

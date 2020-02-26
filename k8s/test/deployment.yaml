@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ads
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ads-config
+  namespace: ads
+data:
+  SPRING_PROFILES_ACTIVE: test
+  SERVER_PORT: "8080"
+  REDIS_URL: redis-svc
+
+---
+# https://matthewpalmer.net/kubernetes-app-developer/articles/kubernetes-apiversion-definition-guide.html
+# https://www.infoq.cn/article/rrJ5IGIAXy4V-X2Hb0QA
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ads
+  namespace: ads
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ads
+      env: test
+      release: canary
+  template:
+    metadata:
+      labels:
+        app: ads
+        env: test
+        release: canary
+    spec:
+      imagePullSecrets:
+        - name: harbor-registry-secret
+      containers:
+        - name: ads
+          image: harbor.test.javachen.com.cn/soft/ads:1.0.8
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ads-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ads-service
+  namespace: ads
+spec:
+  selector:
+    app: ads
+    env: test
+    release: canary
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: 433
+      protocol: TCP
+
+---
+# https://cloud.google.com/blog/products/gcp/kubernetes-best-practices-mapping-external-services
+kind: Service
+apiVersion: v1
+metadata:
+  name: redis-svc
+  namespace: ads
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+# https://confluence.atlassian.com/jirakb/configuring-database-connection-results-in-error-host-xxxxxxx-is-not-allowed-to-connect-to-this-mysql-server-358908249.html
+kind: Endpoints
+apiVersion: v1
+metadata:
+  name: redis-svc
+  namespace: ads
+subsets:
+  - addresses:
+      - ip: 192.168.1.75 # UPDATE TO YOUR MYSQL IP ADDRESS
+    ports:
+      - port: 6379

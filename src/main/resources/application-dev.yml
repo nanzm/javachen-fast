@@ -1,0 +1,22 @@
+management:
+  endpoints:
+    enabled-by-default: true
+    web:
+      exposure:
+        include: '*'
+  endpoint:
+    metrics:
+      enabled: true
+    prometheus:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+logging:
+  file:
+    max-history: 30
+    path: ${java.io.tmpdir}/logs
+  level:
+    org.keycloak: debug
